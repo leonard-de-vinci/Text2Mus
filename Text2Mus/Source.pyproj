@@ -3,13 +3,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>e781b241-393f-4c12-93f4-f76e5da7e64e</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>Playground\MidoPG.py</StartupFile>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>Core\YoutubeApi.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>Text2Mus</Name>
+    <Name>Source</Name>
     <RootNamespace>Text2Mus</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -21,15 +22,23 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Core\MusicAnalyzer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\YoutubeApi.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Playground\MidoPG.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Text2Mus.py" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Core\ReadMe.md" />
     <Content Include="Readme.md" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Core\" />
     <Folder Include="Playground\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
