@@ -16,10 +16,11 @@ class YoutubeVideo():
 
 
 
+
 class YoutubeApi():
     def __init__(self):
         return
     def YoutubeSearch(self, name):
         return
-    def getComments(self,video):
+    def getData(self,video):
         return
