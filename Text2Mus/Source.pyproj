@@ -5,7 +5,7 @@
     <ProjectGuid>e781b241-393f-4c12-93f4-f76e5da7e64e</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Core\YoutubeApi.py</StartupFile>
+    <StartupFile>Playground\GanPG.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,6 +26,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Core\YoutubeApi.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\YoutubeSearch.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Playground\GanPG.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Playground\MidoPG.py">
