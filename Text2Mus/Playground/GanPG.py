@@ -5,19 +5,6 @@ from keras import backend as K
 import threading
 import subprocess
 
-class TBoard(threading.Thread):
-    def __init__(self):
-        self.stdout = None
-        self.stderr = None
-        threading.Thread.__init__(self)
-
-    def run(self):
-        p = subprocess.Popen("tensorboard --logdir=/tmp/autoencoder".split(),
-                             shell=True)
-
-        self.stdout, self.stderr = p.communicate()
-
-
 
 input_img = Input(shape=(28, 28, 1)) 
 x = Conv2D(16, (3, 3), activation='relu', padding='same')(input_img)
@@ -52,11 +39,10 @@ x_test = np.reshape(x_test, (len(x_test), 28, 28, 1))
 from keras.callbacks import TensorBoard
 
 autoencoder.fit(x_train, x_train,
-                epochs=50,
+                epochs=10,
                 batch_size=128,
                 shuffle=True,
-                validation_data=(x_test, x_test)#,
-                #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')]
+                validation_data=(x_test, x_test)
                 )
 
 decoded_imgs = autoencoder.predict(x_test)
@@ -64,7 +50,6 @@ decoded_imgs = autoencoder.predict(x_test)
 n = 10
 plt.figure(figsize=(20, 4))
 for i in range(n):
-    # display original
     ax = plt.subplot(2, n, i)
     plt.imshow(x_test[i].reshape(28, 28))
     plt.gray()
@@ -72,7 +57,6 @@ for i in range(n):
     ax.get_yaxis().set_visible(False)
 
 
-    # display reconstruction
     ax = plt.subplot(2, n, i + n)
     plt.imshow(decoded_imgs[i].reshape(28, 28))
     plt.gray()

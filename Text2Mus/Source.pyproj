@@ -5,7 +5,7 @@
     <ProjectGuid>e781b241-393f-4c12-93f4-f76e5da7e64e</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Playground\GanPG.py</StartupFile>
+    <StartupFile>Playground\MidoPG.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,7 +22,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Core\Midi2Image.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Core\MusicAnalyzer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\SpotifyAPI.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Core\YoutubeApi.py">
