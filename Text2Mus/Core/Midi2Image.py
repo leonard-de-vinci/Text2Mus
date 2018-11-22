@@ -10,7 +10,7 @@ class MidiFile(mido.MidiFile):
     def __init__(self, filename):
 
         mido.MidiFile.__init__(self, filename)
-        self.sr = 10
+        self.sr = 100
         self.meta = {}
         self.events = self.get_events()
 
@@ -41,6 +41,90 @@ class MidiFile(mido.MidiFile):
 
         return events
 
+    def get_BPM(self) :
+        tempo = self.get_tempo()
+        self.BPM = 60000000/tempo
+        return self.BPM
+
+    def get_pulselength(self):
+        self.pulseLength=60/(BPM*mid.ticks_per_beat)
+        return self.pulseLength
+
+    def duration2ticks(self,duration):
+        return int((duration*1000000)*self.ticks_per_beat)/self.get_tempo()
+
+    def get_tempo(self):
+        try:
+            return self.meta["set_tempo"]["tempo"]
+        except:
+            return 500000
+
+    def get_total_ticks(self):
+        max_ticks = 0
+        for channel in range(16):
+            ticks = sum(msg.time for msg in self.events[channel])
+            if ticks > max_ticks:
+                max_ticks = ticks
+        return max_ticks
+    
+    def getArrayData(self):
+        events = self.get_events()
+        # Identify events, then translate to piano roll
+        # choose a sample ratio(sr) to down-sample through time axis
+        sr = self.sr
+
+        # compute total length in tick unit
+        length = self.get_total_ticks()
+
+        # allocate memory to numpy array
+        roll = np.zeros((16, 128, length,2), dtype=np.float32)
+        tempo = self.get_tempo()
+        # use a register array to save the state(no/off) for each key
+        note_register = [int(-1) for x in range(129)]
+
+        # use a register array to save the state(program_change) for each channel
+        timbre_register = [1 for x in range(16)]
+
+        for i, chan in enumerate(events):
+            time_counter = 0
+            volume = 100
+            # Volume would change by control change event (cc) cc7 & cc11
+            # Volume 0-100 is mapped to 0-127
+
+            #print("channel", i, "start")
+            for msg in chan:
+                if msg.type == "control_change":
+                    if msg.control == 7:
+                        volume = msg.value
+                        # directly assign volume
+                    if msg.control == 11:
+                        volume = volume * msg.value // 127
+                        # change volume by percentage
+                    # print("cc", msg.control, msg.value, "duration", msg.time)
+
+                if msg.type == "program_change":
+                    timbre_register[i] = msg.program
+                    #print("channel", idx, "pc", msg.program, "time", time_counter, "duration", msg.time)
+
+
+
+                if msg.type == "note_on":
+                    #for n in range(time_counter//sr,int(time_counter+self.duration2ticks(msg.time))//sr):
+                    try:
+                        roll[i,msg.note,time_counter] = np.array([msg.velocity,msg.time], dtype=np.float32) 
+                    except:
+                        continue
+           
+                if msg.type == "note_off":
+                    roll[i,msg.note,time_counter] = np.array([-1,-1], dtype=np.float32)
+
+                time_counter += msg.time
+
+
+        return roll, timbre_register
+    
+        
+
     def get_roll(self):
         events = self.get_events()
         # Identify events, then translate to piano roll
@@ -67,7 +151,7 @@ class MidiFile(mido.MidiFile):
             # Volume would change by control change event (cc) cc7 & cc11
             # Volume 0-100 is mapped to 0-127
 
-            print("channel", idx, "start")
+            #print("channel", idx, "start")
             for msg in channel:
                 if msg.type == "control_change":
                     if msg.control == 7:
@@ -88,7 +172,7 @@ class MidiFile(mido.MidiFile):
                 if msg.type == "note_on":
                     note_on_start_time = time_counter // sr
                     note_on_end_time = (time_counter + msg.time) // sr
-                    intensity = volume * msg.velocity // 127
+                    intensity = 127
 					# When a note_on event *ends* the note start to be play 
 					# Record end time of note_on event if there is no value in register
 					# When note_off event happens, we fill in the color
@@ -107,7 +191,7 @@ class MidiFile(mido.MidiFile):
                     note_off_start_time = time_counter // sr
                     note_off_end_time = (time_counter + msg.time) // sr
                     note_on_end_time = note_register[msg.note][0]
-                    intensity = note_register[msg.note][1]
+                    intensity = 0
 					# fill in color
                     roll[idx, msg.note, note_on_end_time:note_off_end_time] = intensity
 
@@ -132,197 +216,28 @@ class MidiFile(mido.MidiFile):
 
         return roll
 
-    def get_roll_image(self):
-        roll = self.get_roll()
-        plt.ioff()
 
-        K = 16
 
-        transparent = colorConverter.to_rgba('black')
-        colors = [mpl.colors.to_rgba(mpl.colors.hsv_to_rgb((i / K, 1, 1)), alpha=1) for i in range(K)]
-        cmaps = [mpl.colors.LinearSegmentedColormap.from_list('my_cmap', [transparent, colors[i]], 128) for i in
-                 range(K)]
+def Roll2Midi(roll, program):
+    #Step 1 Get notes arrays
+    mid = mido.MidiFile()
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+    track.append(mido.Message('program_change', program=program, time=0))
+    swap = np.swapaxes(roll,0,1)
+    for height, i in enumerate(swap):
+        happened = 0
+        for time, j in enumerate(i):
+            if np.all([j,np.array([-1,-1], dtype=np.float32)]):
+                track.append(mido.Message('note_off', note = height))
 
-        for i in range(K):
-            cmaps[i]._init()  # create the _lut array, with rgba values
-            # create your alpha array and fill the colormap with them.
-            # here it is progressive, but you can create whathever you want
-            alphas = np.linspace(0, 1, cmaps[i].N + 3)
-            cmaps[i]._lut[:, -1] = alphas
-
-        fig = plt.figure(figsize=(4, 3))
-        a1 = fig.add_subplot(111)
-        a1.axis("equal")
-        a1.set_facecolor("black")
+            elif not np.all([j,np.array([-1,-1], dtype=np.float32)]):
+                print("j =",j)
+                track.append(mido.Message('note_on', velocity=127, time = 100, note = height))
+        return mid
+    #= np.zeros((128, length // sr), dtype=np.float32)
+    # Fuse all 
+    # Identify events, then translate to piano roll
+    # choose a sample ratio(sr) to down-sample through time axis
         
-
-        array = []
-
-        for i in range(K):
-            try:
-                img = a1.imshow(roll[i], interpolation='nearest', cmap=cmaps[i], aspect='auto')
-                array.append(img.get_array())
-            except IndexError:
-                pass
-        
-        return array
-
-    def draw_roll(self):
-
-
-        roll = self.get_roll()
-
-        # build and set fig obj
-        plt.ioff()
-        fig = plt.figure(figsize=(4, 3))
-        a1 = fig.add_subplot(111)
-        a1.axis("equal")
-        a1.set_facecolor("black")
-
-        # change unit of time axis from tick to second
-        tick = self.get_total_ticks()
-        second = mido.tick2second(tick, self.ticks_per_beat, self.get_tempo())
-        #print(second)
-        if second > 10:
-            x_label_period_sec = second // 10
-        else:
-            x_label_period_sec = second / 10  # ms
-        #print(x_label_period_sec)
-        x_label_interval = mido.second2tick(x_label_period_sec, self.ticks_per_beat, self.get_tempo()) / self.sr
-        #print(x_label_interval)
-        plt.xticks([int(x * x_label_interval) for x in range(20)], [round(x * x_label_period_sec, 2) for x in range(20)])
-
-        # change scale and label of y axis
-        plt.yticks([y*16 for y in range(8)], [y*16 for y in range(8)])
-
-        # build colors
-        channel_nb = 16
-        transparent = colorConverter.to_rgba('black')
-        colors = [mpl.colors.to_rgba(mpl.colors.hsv_to_rgb((i / channel_nb, 1, 1)), alpha=1) for i in range(channel_nb)]
-        cmaps = [mpl.colors.LinearSegmentedColormap.from_list('my_cmap', [transparent, colors[i]], 128) for i in
-                 range(channel_nb)]
-
-        # build color maps
-        for i in range(channel_nb):
-            cmaps[i]._init()
-            # create your alpha array and fill the colormap with them.
-            alphas = np.linspace(0, 1, cmaps[i].N + 3)
-            # create the _lut array, with rgba values
-            cmaps[i]._lut[:, -1] = alphas
-
-
-        # draw piano roll and stack image on a1
-        for i in range(channel_nb):
-            try:
-                a1.imshow(roll[i], origin="lower", interpolation='nearest', cmap=cmaps[i], aspect='auto')
-            except IndexError:
-                pass
-
-        # draw color bar
-
-        colors = [mpl.colors.hsv_to_rgb((i / channel_nb, 1, 1)) for i in range(channel_nb)]
-        cmap = mpl.colors.LinearSegmentedColormap.from_list('my_cmap', colors, 16)
-        a2 = fig.add_axes([0.05, 0.80, 0.9, 0.15])
-        cbar = mpl.colorbar.ColorbarBase(a2, cmap=cmap,
-                                        orientation='horizontal',
-                                        ticks=list(range(16)))
-
-        # show piano roll
-        plt.draw()
-        plt.ion()
-        plt.show(block=True)
-
-    def get_tempo(self):
-        try:
-            return self.meta["set_tempo"]["tempo"]
-        except:
-            return 500000
-
-
-    
-    def get_total_ticks(self):
-        max_ticks = 0
-        for channel in range(16):
-            ticks = sum(msg.time for msg in self.events[channel])
-            if ticks > max_ticks:
-                max_ticks = ticks
-        return max_ticks
-    
-    def getArrayData(self):
-        events = self.get_events()
-        # Identify events, then translate to piano roll
-        # choose a sample ratio(sr) to down-sample through time axis
-        sr = self.sr
-
-        # compute total length in tick unit
-        length = self.get_total_ticks()
-
-        # allocate memory to numpy array
-        roll = np.zeros((16, 128, length // sr,4), dtype=np.uint8)
-
-        # use a register array to save the state(no/off) for each key
-        note_register = [int(-1) for x in range(129)]
-
-        # use a register array to save the state(program_change) for each channel
-        timbre_register = [1 for x in range(16)]
-
-        for i, chan in enumerate(events):
-            time_counter = 0
-            volume = 100
-            # Volume would change by control change event (cc) cc7 & cc11
-            # Volume 0-100 is mapped to 0-127
-
-            print("channel", i, "start")
-            for msg in chan:
-                if msg.type == "control_change":
-                    if msg.control == 7:
-                        volume = msg.value
-                        # directly assign volume
-                    if msg.control == 11:
-                        volume = volume * msg.value // 127
-                        # change volume by percentage
-                    # print("cc", msg.control, msg.value, "duration", msg.time)
-
-                if msg.type == "program_change":
-                    timbre_register[i] = msg.program
-                    #print("channel", idx, "pc", msg.program, "time", time_counter, "duration", msg.time)
-
-
-
-                if msg.type == "note_on":
-                    for j in range(time_counter,
-                                   int(time_counter+mido.second2tick(msg.time,self.ticks_per_beat,self.get_tempo()))):
-                        try:
-                            roll[i,msg.note,j] = np.append(rgb_int2tuple(timbre_register[i]),(msg.velocity*volume/256))
-                        except:
-                            print("Couldn't make it true ",np.append(rgb_int2tuple(timbre_register[i]),(msg.velocity*volume/256)))
-                        if j>length//sr:
-                            break
-                if msg.type == "note_off":
-                    roll[chan][msg.note][time_counter] = -1
-
-                time_counter += msg.time
-
-                # TODO : velocity -> done, but not verified
-                # TODO: Pitch wheel
-                # TODO: Channel - > Program Changed / Timbre catagory
-                # TODO: real time scale of roll
-
-            # if there is a note not closed at the end of a channel, close it
-        return roll
-
-    def RollToMidi(self, roll):
-        #Step 1 Get notes arrays
-
-        roll #= np.zeros((16, 128, length // sr), dtype="int8")
-        print(roll[10][50])
-        print("done")
-
-def rgb_int2tuple(prgm):
-    rgbint = prgm*131072
-    return np.array((rgbint // 256 // 256 % 256, rgbint // 256 % 256, rgbint % 256),dtype = np.uint8)
-
-def getImageFromMidi(midi):
-    mid = MidiFile(midi)
-    roll = mid.getArrayData()
-    return roll
+    # compute total length in tick unit
