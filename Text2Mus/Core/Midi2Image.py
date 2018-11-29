@@ -4,15 +4,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.colors import colorConverter
+import random
 
 class MidiFile(mido.MidiFile):
 
-    def __init__(self, filename):
+    def __init__(self, filename, sampleRate):
 
         mido.MidiFile.__init__(self, filename)
-        self.sr = 100
+        self.sr = sampleRate
         self.meta = {}
+        with open("./Core/ProgramNames.txt","r") as f:
+            data = [i.replace("\n","") for i in f.readlines()]
+            self.programN = data[:-1]
         self.events = self.get_events()
+        
 
     def get_events(self):
         mid = self
@@ -122,6 +127,29 @@ class MidiFile(mido.MidiFile):
 
 
         return roll, timbre_register
+
+    def getPianoOnly(self):
+        event = []
+        for i in self.events:
+            for j in i:
+                if j.type =="program_change":
+                    if j.program == 0:
+                        event = i
+                        break
+        
+
+        sr = self.sr
+
+        # compute total length in tick unit
+        length = self.get_total_ticks()
+        # allocate memory to numpy array
+        roll = np.zeros((128, length//sr,2), dtype=np.float32)
+        reltime = 0
+        for idx,msg in enumerate(event):
+            if msg.type =="note_on":
+                roll[msg.note,int(reltime)] = np.array([msg.velocity,msg.time])
+            reltime+=msg.time
+        return roll
     
         
 
@@ -135,8 +163,11 @@ class MidiFile(mido.MidiFile):
         length = self.get_total_ticks()
 
         # allocate memory to numpy array
-        roll = np.zeros((16, 128, length // sr), dtype="int8")
-
+        roll = np.zeros((16, 128, 10000), dtype="float32")
+        if lenth>10000:
+            limit = random.randint(0,length-10001)
+        else :
+            limit = random.randint(0,length-5001)
         # use a register array to save the state(no/off) for each key
         note_register = [int(-1) for x in range(128)]
 
@@ -153,7 +184,12 @@ class MidiFile(mido.MidiFile):
 
             #print("channel", idx, "start")
             for msg in channel:
-                if msg.type == "control_change":
+                if time_counter<limit:
+                    time_counter+=msg.time
+                    continue
+                elif time_counter>limit+10000:
+                    return roll
+                elif msg.type == "control_change":
                     if msg.control == 7:
                         volume = msg.value
                         # directly assign volume
@@ -162,14 +198,15 @@ class MidiFile(mido.MidiFile):
                         # change volume by percentage
                     # print("cc", msg.control, msg.value, "duration", msg.time)
 
-                if msg.type == "program_change":
+                elif msg.type == "program_change":
                     timbre_register[idx] = msg.program
 
                     #print("channel", idx, "pc", msg.program, "time", time_counter, "duration", msg.time)
 
 
 
-                if msg.type == "note_on":
+                elif msg.type == "note_on":
+                    print("there's a note on in ",idx)
                     note_on_start_time = time_counter // sr
                     note_on_end_time = (time_counter + msg.time) // sr
                     intensity = 127
@@ -186,7 +223,7 @@ class MidiFile(mido.MidiFile):
                         note_register[msg.note] = (note_on_end_time,intensity)
 
 
-                if msg.type == "note_off":
+                elif msg.type == "note_off":
                     #print("off", msg.note, "time", time_counter, "duration", msg.time, "velocity", msg.velocity)
                     note_off_start_time = time_counter // sr
                     note_off_end_time = (time_counter + msg.time) // sr
@@ -197,7 +234,8 @@ class MidiFile(mido.MidiFile):
 
                     note_register[msg.note] = -1  # reinitialize register
 
-                time_counter += msg.time
+                else:
+                    time_counter += msg.time
 
                 # TODO : velocity -> done, but not verified
                 # TODO: Pitch wheel
@@ -215,6 +253,73 @@ class MidiFile(mido.MidiFile):
                 note_register[idx] = -1
 
         return roll
+    def get_Array2(self):
+        events = self.get_events()
+        # Identify events, then translate to piano roll
+        # choose a sample ratio(sr) to down-sample through time axis
+        sr = self.sr
+
+        # compute total length in tick unit
+        length = self.get_total_ticks()
+        roll = np.zeros((16, 128, length), dtype="float32")
+        if length>10000:
+            limit = random.randint(0,length-10001)
+        else :
+            limit = 0
+        # allocate memory to numpy array
+        tempo = self.get_tempo()
+        # use a register array to save the state(no/off) for each key
+        note_register = [int(-1) for x in range(129)]
+
+        # use a register array to save the state(program_change) for each channel
+        timbre_register = [1 for x in range(16)]
+
+        for i, chan in enumerate(events):
+            time_counter = 0
+            volume = 100
+            # Volume would change by control change event (cc) cc7 & cc11
+            # Volume 0-100 is mapped to 0-127
+
+            #print("channel", i, "start")
+            for msg in chan:
+                if msg.type == "control_change":
+                    if msg.control == 7:
+                        volume = msg.value
+                        # directly assign volume
+                    if msg.control == 11:
+                        volume = volume * msg.value // 127
+                        # change volume by percentage
+                    # print("cc", msg.control, msg.value, "duration", msg.time)
+
+                if msg.type == "program_change":
+                    timbre_register[i] = msg.program
+                    #print("channel", idx, "pc", msg.program, "time", time_counter, "duration", msg.time)
+
+
+
+                if msg.type == "note_on":
+                    #for n in range(time_counter//sr,int(time_counter+self.duration2ticks(msg.time))//sr):
+                    try:
+                        roll[i,msg.note,time_counter:int(time_counter+msg.time)] = msg.velocity
+                    except:
+                        continue
+           
+                if msg.type == "note_off":
+                    if time_counter==length:
+                        roll[i,msg.note,time_counter-1] = -1
+                    else :
+                        roll[i,msg.note,time_counter-1] = -1
+
+                time_counter += msg.time
+
+
+        if length>10000:
+            return roll[:,:,limit:limit+10000]
+        else :
+            a = np.zeros((16,128,10000))
+            a[:roll.shape[0],:roll.shape[1],:roll.shape[2]]=roll
+            return a
+
 
 
 
@@ -223,8 +328,11 @@ def Roll2Midi(roll, program):
     mid = mido.MidiFile()
     track = mido.MidiTrack()
     mid.tracks.append(track)
+    np.set_printoptions(threshold=np.nan)
+    print(roll[64])
     track.append(mido.Message('program_change', program=program, time=0))
     swap = np.swapaxes(roll,0,1)
+    
     for height, i in enumerate(swap):
         happened = 0
         for time, j in enumerate(i):
@@ -235,9 +343,3 @@ def Roll2Midi(roll, program):
                 print("j =",j)
                 track.append(mido.Message('note_on', velocity=127, time = 100, note = height))
         return mid
-    #= np.zeros((128, length // sr), dtype=np.float32)
-    # Fuse all 
-    # Identify events, then translate to piano roll
-    # choose a sample ratio(sr) to down-sample through time axis
-        
-    # compute total length in tick unit
