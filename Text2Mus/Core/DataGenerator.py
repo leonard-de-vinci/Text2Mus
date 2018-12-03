@@ -4,7 +4,7 @@ import tensorflow.keras as keras
 
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, list_IDs, batch_size=1, dim=(16,128,10000), n_channels=1, shuffle=True):
+    def __init__(self, list_IDs, batch_size=1, dim=(16,128,5000), n_channels=1, shuffle=True):
         'Initialization'
         self.dim = dim
         self.batch_size = batch_size

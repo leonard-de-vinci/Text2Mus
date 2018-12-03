@@ -262,8 +262,8 @@ class MidiFile(mido.MidiFile):
         # compute total length in tick unit
         length = self.get_total_ticks()
         roll = np.zeros((16, 128, length), dtype="float32")
-        if length>10000:
-            limit = random.randint(0,length-10001)
+        if length>5000:
+            limit = random.randint(0,length-5001)
         else :
             limit = 0
         # allocate memory to numpy array
@@ -314,9 +314,9 @@ class MidiFile(mido.MidiFile):
 
 
         if length>10000:
-            return roll[:,:,limit:limit+10000]
+            return roll[:,:,limit:limit+5000]
         else :
-            a = np.zeros((16,128,10000))
+            a = np.zeros((16,128,5000))
             a[:roll.shape[0],:roll.shape[1],:roll.shape[2]]=roll
             return a
 
