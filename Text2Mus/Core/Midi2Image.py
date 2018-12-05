@@ -312,7 +312,6 @@ class MidiFile(mido.MidiFile):
 
                 time_counter += msg.time
 
-
         if length>10000:
             return roll[:,:,limit:limit+5000]
         else :
@@ -329,17 +328,19 @@ def Roll2Midi(roll, program):
     track = mido.MidiTrack()
     mid.tracks.append(track)
     np.set_printoptions(threshold=np.nan)
-    print(roll[64])
     track.append(mido.Message('program_change', program=program, time=0))
     swap = np.swapaxes(roll,0,1)
-    
-    for height, i in enumerate(swap):
-        happened = 0
-        for time, j in enumerate(i):
-            if np.all([j,np.array([-1,-1], dtype=np.float32)]):
-                track.append(mido.Message('note_off', note = height))
+    port = mido.open_output(mido.get_output_names()[0])
 
-            elif not np.all([j,np.array([-1,-1], dtype=np.float32)]):
-                print("j =",j)
-                track.append(mido.Message('note_on', velocity=127, time = 100, note = height))
+
+    for i in swap:
+        happened = 0
+        for height, j in enumerate(i):
+            for time,k in enumerate(j):
+                if k>0:
+                    print("dodo")
+                    track.append(mido.Message('note_on', note = height))
+                    port.send(mido.Message('note_on', note = height))
+                else:
+                    track.append(mido.Message('note_on', velocity=127, time = 1000, note = height))
         return mid

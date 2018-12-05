@@ -37,6 +37,7 @@
     <Compile Include="Core\SpotifyAPI.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Core\TextEmbedder.py" />
     <Compile Include="Core\YoutubeApi.py">
       <SubType>Code</SubType>
     </Compile>

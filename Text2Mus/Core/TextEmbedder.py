@@ -1,6 +1,7 @@
-texts = []  # list of text samples
-labels_index = {}  # dictionary mapping label name to numeric id
-labels = []  # list of label ids
+import os
+import numpy as np
+from numpy import zeros, newaxis
+
 
 class TextEmbedder(object):
     """description of class"""
@@ -17,3 +18,10 @@ class TextEmbedder(object):
                 embedding = np.array([float(val) for val in splitLine[1:]])
                 vectorize[word] = embedding
         return vectorize
+    def Vectorize(self, word):
+        a = self.GloveVector[word]
+        c = zeros((1024))
+        c[:a.shape[0]] = a
+        b = a[:,newaxis,newaxis]
+        return c.reshape((2,16,32))
+        
