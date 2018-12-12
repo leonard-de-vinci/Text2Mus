@@ -1,0 +1,129 @@
+Piano 1
+Piano 2
+Piano 3
+Honky-Tonk
+Electric Piano 1
+Electric Piano 2
+Harpsichord
+Clavinet
+Celeste
+Glockenspiel
+Music Box
+Vibraphone
+Marimba
+Xylophone
+Tubular Bell
+Santur
+Organ 1
+Organ 2
+Organ 3
+Church Organ 1
+Reed Organ
+Accordion
+Harmonica
+Bandneon
+Nylon-String Guitar
+Steel-String Guitar
+Jazz Guitar
+Clean Guitar
+Muted Guitar
+Overdriven Guitar
+Distorted Guitar
+Guitar Harmonics
+Acoustic Bass
+Fingered Bass
+Picked Bass
+Fretless Bass
+Slap Bass 1
+Slap Bass 2
+Synth Bass 1
+Synth Bass 2
+Violin
+Viola
+Cello
+Contrabasse
+Tremolo Strings
+Pizzicato Strings
+Harp
+Timpani
+Strings
+Slow Strings
+Synth Strings 1
+Synth Strings 2
+Choral Ahs
+Choral Oohs
+SynVox
+Ochestra Hit
+Trumpet
+Trombone
+Tuba
+Muted Trumpet
+French Horn
+Brass
+Synth Brass 1
+Synth Brass 2
+Soprano Sax
+Alto Sax
+Tenor Sax
+Baritone Sax
+Oboe
+English Horn
+Bassoon
+Clarinet
+Piccolo
+Flute
+Recorder
+Pan Flute
+Bottle Blow
+Shakuhachi
+Whistle
+Ocarina
+Square Wave
+Sawtooth Wave
+Synth Calliope
+Chiffy Lead
+Charang
+Solo Vox
+Saw Wave Fifth
+Bass & Lead
+Fanstasia
+Warm Pad
+Polysynth
+Space Voice
+Bowed Glass
+Metal Pad
+Halo Pad
+Sweep Pad
+Ice Rain
+Soundtrack
+Crystal
+Atmosphere
+Brightness
+Goblin
+Echo Drops
+Star Theme
+Sitar
+Banjo
+Shamisen
+Koto
+Kalimba
+Bagpipe
+Kokyu
+Shanai
+Tinkle Bell
+Agogo
+Steel Drums
+Woodblock
+Taiko
+Mellow Tom
+Synth Drum
+Reverse Cymbal
+Guitar Fret Noise
+Flanged Keyclick
+Seashore
+Bird
+Telephone
+Helicopter
+Applause
+Gun Shot
+
