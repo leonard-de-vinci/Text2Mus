@@ -18,7 +18,12 @@ Work in progress
 * keras + tensorflow
 
 ```
-pip install keras
+pip install tensorflow
+```
+* Pytorch
+```
+pip install https://download.pytorch.org/whl/cu90/torch-1.0.0-cp36-cp36m-win_amd64.whl
+pip install torchvision
 ```
 * python-rtmidi
 ```
