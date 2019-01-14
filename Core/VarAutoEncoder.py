@@ -28,7 +28,7 @@ torch.manual_seed(args.seed)
 
 device = torch.device("cpu")
 
-kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./', train=True, download=False,
                    transform=transforms.ToTensor()),

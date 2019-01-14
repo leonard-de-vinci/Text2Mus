@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from numpy import zeros, newaxis
+from scipy.spatial.distance import cosine
 
 
 class TextEmbedder(object):
@@ -18,10 +19,47 @@ class TextEmbedder(object):
                 embedding = np.array([float(val) for val in splitLine[1:]])
                 vectorize[word] = embedding
         return vectorize
+    def similarity(self, word1, word2):
+        return cosine(self.GloveVector[word1],self.GloveVector[word2])
+    def EmotionalCloseness(self, word):
+        toreturn = []
+        for w in basicEmotions:
+            toreturn.append(self.similarity(w,word))
+        return np.array(toreturn,dtype = np.float32)
+        
     def Vectorize(self, word):
         a = self.GloveVector[word]
-        c = zeros((1024))
-        c[:a.shape[0]] = a
-        b = a[:,newaxis,newaxis]
-        return c.reshape((2,16,32))
-        
+        return a
+
+#28 basic emotions
+basicEmotions = ["suffering",
+    "weeping",
+    "anxiety",
+    "grief",
+    "dejection",
+    "despair",
+    "joy",
+    "love",
+    "tender",
+    "devotion",
+    "reflection",
+    "meditation",
+    "determination",
+    "hatred",
+    "anger",
+    "disdain",
+    "contempt",
+    "disgust",
+    "guilt",
+    "pride",
+    "helplessness",
+    "patience",
+    "affirmation",
+    "fear",
+    "horror",
+    "shame",
+    "shyness",
+    "modesty"]
+Embedder = TextEmbedder("d:\glove.6B.100d.txt")
+
+#print(Embedder.EmotionalCloseness("hating")[basicEmotions.index("hatred")])

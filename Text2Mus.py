@@ -1,8 +1,8 @@
 import mido
 import Core.Midi2Image as m2i
-from Core.DataGenerator import DataGenerator as G
+from Core.KerasGenerator import DataGenerator as G
 import os
-from Core.AutoEncoder import AutoMidi as AM
+from Core.KerasAE import AutoMidi as AM
 import numpy as np
 path = "D:/musics/130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]/"
 
